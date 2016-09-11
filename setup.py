@@ -85,6 +85,9 @@ setup(
         ],
         'sqlalchemy': [
             'graphene-sqlalchemy',
+        ],
+        'peewee': [
+            'graphene-peewee',
         ]
     },
     cmdclass={'test': PyTest},
