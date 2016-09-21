@@ -1,3 +1,4 @@
+import asyncio
 import peewee
 # from peewee import fn, SQL, Clause
 
@@ -98,11 +99,16 @@ class PeeweeConnectionField(ConnectionField):
         query = maybe_query(query)
         return query
 
-    def from_list(self, connection_type, resolved, args, context, info):
+    @asyncio.coroutine
+    def async_from_list(self, connection_type, resolved, args, context, info):
         query = self.get_query(resolved, args, info)
+        result = yield from self.model._meta.manager.execute(query)
         return super(PeeweeConnectionField, self).from_list(
-            connection_type, query, args, context, info
+            connection_type, result, args, context, info
         )
+
+    def from_list(self, connection_type, resolved, args, context, info):
+        return asyncio.async(self.async_from_list(connection_type, resolved, args, context, info))
 
 
 class ConnectionOrListField(Field):
