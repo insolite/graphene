@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 
 import peewee
@@ -102,9 +103,14 @@ class PeeweeNode(six.with_metaclass(
         abstract = True
 
     @classmethod
-    def get_node(cls, id, info=None):
+    @asyncio.coroutine
+    def async_get_node(cls, id, info=None):
+        model = cls._meta.model
         try:
-            instance = cls._meta.model.get(id=id)
-            return cls(instance)
-        except cls._meta.model.DoesNotExist:
+            return (yield from model._meta.manager.get(model, id=id))
+        except model.DoesNotExist:
             return None
+
+    @classmethod
+    def get_node(cls, id, info=None):
+        return asyncio.async(cls.async_get_node(id, info))
