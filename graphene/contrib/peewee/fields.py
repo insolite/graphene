@@ -1,6 +1,6 @@
 import asyncio
 import peewee
-# from peewee import fn, SQL, Clause
+from peewee import fn, SQL, Clause
 
 from ...core.exceptions import SkipField
 from ...core.fields import Field
@@ -19,7 +19,7 @@ from .utils import (
 ORDER_BY_FIELD = 'order_by'
 PAGE_FIELD = 'page'
 PAGINATE_BY_FIELD = 'paginate_by'
-# TOTAL_FIELD = '__total__'
+TOTAL_FIELD = '__total__'
 
 
 class PeeweeConnectionField(ConnectionField):
@@ -74,10 +74,9 @@ class PeeweeConnectionField(ConnectionField):
     def paginate(self, query, page, paginate_by):
         if page and paginate_by:
             query = query.paginate(page, paginate_by)
-            # total = Clause(fn.Count(SQL('*')),
-            #                fn.Over(), glue=' ').alias(TOTAL_FIELD)
-            # query._select = tuple(query._select) + (total,)
-            # total = getattr(result[0], TOTAL_FIELD, None) if result else 0
+            total = Clause(fn.Count(SQL('*')),
+                           fn.Over(), glue=' ').alias(TOTAL_FIELD)
+            query._select = tuple(query._select) + (total,)
         return query
 
     def get_query(self, query, args, info):

@@ -5,11 +5,13 @@ import peewee
 import six
 
 from ...core.classtypes.objecttype import ObjectType, ObjectTypeMeta
+from ...core.types import Int
 from ...relay.types import Node, NodeMeta
 from ...relay.types import Connection
 from .converter import convert_peewee_field_with_choices
 from .options import PeeweeOptions
 from .utils import get_reverse_fields
+from .fields import TOTAL_FIELD
 
 
 class PeeweeObjectTypeMeta(ObjectTypeMeta):
@@ -83,7 +85,15 @@ class PeeweeObjectType(six.with_metaclass(
 
 
 class PeeweeConnection(Connection):
-    pass
+
+    count = Int()
+    total = Int()
+
+    def resolve_count(self, args, context, info=None):
+        return len(self.edges)
+
+    def resolve_total(self, args, context, info=None):
+        return getattr(self.edges[0].node, TOTAL_FIELD, None) if self.edges else 0
 
 
 class PeeweeNodeMeta(PeeweeObjectTypeMeta, NodeMeta):
