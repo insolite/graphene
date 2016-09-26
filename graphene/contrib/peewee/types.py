@@ -93,7 +93,12 @@ class PeeweeConnection(Connection):
         return len(self.edges)
 
     def resolve_total(self, args, context, info=None):
-        return getattr(self.edges[0].node, TOTAL_FIELD, None) if self.edges else 0
+        if self.edges:
+            result = getattr(self.edges[0].node, TOTAL_FIELD, None)
+            if result is None:
+                return len(self.edges)
+            return result
+        return 0
 
 
 class PeeweeNodeMeta(PeeweeObjectTypeMeta, NodeMeta):
