@@ -1,6 +1,7 @@
 import peewee
 from graphql.utils.ast_to_dict import ast_to_dict
 
+from graphene.core.types import List
 from graphene.utils import LazyList
 from ...core.types import Argument
 
@@ -118,6 +119,7 @@ def get_arg_name(prefix, name, lookup):
                          (name + DELIM + lookup)
                          if lookup else name)
 
+
 def get_filtering_args(model, filters, prefix=''):
     """ Inspect a model and produce the arguments to pass to
         a Graphene Field. These arguments will be available to
@@ -126,6 +128,7 @@ def get_filtering_args(model, filters, prefix=''):
     from .converter import convert_peewee_field
 
     all_lookups = list(peewee.DJANGO_MAP.keys())
+    lookup_wrappers = {'in': List}
 
     fields = {}
     fields.update(model._meta.fields)
@@ -149,14 +152,23 @@ def get_filtering_args(model, filters, prefix=''):
             for lookup in (all_lookups + ['']):
                 field_name = '{}_{}'.format(key, pk_field.name)
                 argument_name = get_arg_name(prefix, field_name, lookup)
-                argument = Argument(convert_peewee_field(pk_field))
+                graphql_field = convert_peewee_field(pk_field)
+                lookup_wrapper = lookup_wrappers.get(lookup)
+                if lookup_wrapper:
+                    graphql_field = lookup_wrapper(graphql_field)
+                argument = Argument(graphql_field)
                 result[argument_name] = argument
         else:
             for lookup in (val + ['']):
                 argument_name = get_arg_name(prefix, key, lookup)
-                argument = Argument(convert_peewee_field(field))
+                graphql_field = convert_peewee_field(field)
+                lookup_wrapper = lookup_wrappers.get(lookup)
+                if lookup_wrapper:
+                    graphql_field = lookup_wrapper(graphql_field)
+                argument = Argument(graphql_field)
                 result[argument_name] = argument
     return result
+
 
 def get_requested_models(fields, related_model):
     if tuple(fields.keys()) == ('edges',):
